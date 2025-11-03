@@ -13,7 +13,8 @@ struct pyStartApp: App {
 
   @StateObject private var processManager = ProcessManager()
   @StateObject private var settingsManager = SettingsManager()
-
+  @StateObject private var launchManager = LaunchAtLoginManager()
+  
   var body: some Scene {
     MenuBarExtra {
       // 注入 ProcessManager
@@ -29,6 +30,7 @@ struct pyStartApp: App {
     Settings {
       SettingsView()
         .environmentObject(settingsManager)
+        .environmentObject(launchManager)
     }
   }
 }

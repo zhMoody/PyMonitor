@@ -9,7 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
   @EnvironmentObject var settingsManager: SettingsManager
-
+  @EnvironmentObject var launchManager: LaunchAtLoginManager
+  
   var body: some View {
     Form {
       // MARK: - Python 解释器设置
@@ -20,7 +21,7 @@ struct SettingsView: View {
 
         // 使用 LabeledContent 优化布局
         LabeledContent {
-          TextField("例如: /usr/local/bin/python3", text: $settingsManager.pythonPath)
+          TextField("", text: $settingsManager.pythonPath)
         } label: {
           Text("解释器路径:")
         }
@@ -51,9 +52,15 @@ struct SettingsView: View {
           Text("脚本目录:")
         }
       }
+      
+      Divider().padding(.vertical, 8)
+      Section(header: Text("通用设置").font(.headline)) {
+               Toggle("开机时自动启动", isOn: $launchManager.isEnabled)
+                 .toggleStyle(.switch)
+           }
     }
     .padding()
-    .frame(width: 500, height: 250)  // 给设置窗口一个合适的尺寸
+    .frame(width: 500, height: 320)  // 给设置窗口一个合适的尺寸
   }
 }
 

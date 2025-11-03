@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F5DB0AF02EB87671009E5CB8 /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = F5DB0AEF2EB87671009E5CB8 /* DequeModule */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F51C5D342EB4A5AF00DC8586 /* pyMonitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = pyMonitor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5DB0AE02EB87197009E5CB8 /* PyMonitorHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PyMonitorHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +21,23 @@
 			path = pyMonitor;
 			sourceTree = "<group>";
 		};
+		F5DB0AE12EB87197009E5CB8 /* PyMonitorHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PyMonitorHelper;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		F51C5D312EB4A5AF00DC8586 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5DB0AF02EB87671009E5CB8 /* DequeModule in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F5DB0ADD2EB87197009E5CB8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				F51C5D362EB4A5AF00DC8586 /* pyMonitor */,
+				F5DB0AE12EB87197009E5CB8 /* PyMonitorHelper */,
 				F51C5D352EB4A5AF00DC8586 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +60,7 @@
 			isa = PBXGroup;
 			children = (
 				F51C5D342EB4A5AF00DC8586 /* pyMonitor.app */,
+				F5DB0AE02EB87197009E5CB8 /* PyMonitorHelper.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -65,9 +85,32 @@
 			);
 			name = pyMonitor;
 			packageProductDependencies = (
+				F5DB0AEF2EB87671009E5CB8 /* DequeModule */,
 			);
 			productName = pyStart;
 			productReference = F51C5D342EB4A5AF00DC8586 /* pyMonitor.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F5DB0ADF2EB87197009E5CB8 /* PyMonitorHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F5DB0AEA2EB87198009E5CB8 /* Build configuration list for PBXNativeTarget "PyMonitorHelper" */;
+			buildPhases = (
+				F5DB0ADC2EB87197009E5CB8 /* Sources */,
+				F5DB0ADD2EB87197009E5CB8 /* Frameworks */,
+				F5DB0ADE2EB87197009E5CB8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F5DB0AE12EB87197009E5CB8 /* PyMonitorHelper */,
+			);
+			name = PyMonitorHelper;
+			packageProductDependencies = (
+			);
+			productName = PyMonitorHelper;
+			productReference = F5DB0AE02EB87197009E5CB8 /* PyMonitorHelper.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -83,6 +126,9 @@
 					F51C5D332EB4A5AF00DC8586 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
+					F5DB0ADF2EB87197009E5CB8 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = F51C5D2F2EB4A5AF00DC8586 /* Build configuration list for PBXProject "pyMonitor" */;
@@ -94,12 +140,16 @@
 			);
 			mainGroup = F51C5D2B2EB4A5AF00DC8586;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F5DB0AEE2EB87671009E5CB8 /* XCRemoteSwiftPackageReference "swift-collections" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F51C5D352EB4A5AF00DC8586 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				F51C5D332EB4A5AF00DC8586 /* pyMonitor */,
+				F5DB0ADF2EB87197009E5CB8 /* PyMonitorHelper */,
 			);
 		};
 /* End PBXProject section */
@@ -112,10 +162,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F5DB0ADE2EB87197009E5CB8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F51C5D302EB4A5AF00DC8586 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F5DB0ADC2EB87197009E5CB8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -317,6 +381,70 @@
 			};
 			name = Release;
 		};
+		F5DB0AE82EB87198009E5CB8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WYUSR3RW56;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.coder.pyMonitor.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F5DB0AE92EB87198009E5CB8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WYUSR3RW56;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.coder.pyMonitor.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -338,7 +466,35 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F5DB0AEA2EB87198009E5CB8 /* Build configuration list for PBXNativeTarget "PyMonitorHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5DB0AE82EB87198009E5CB8 /* Debug */,
+				F5DB0AE92EB87198009E5CB8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F5DB0AEE2EB87671009E5CB8 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F5DB0AEF2EB87671009E5CB8 /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F5DB0AEE2EB87671009E5CB8 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F51C5D2C2EB4A5AF00DC8586 /* Project object */;
 }

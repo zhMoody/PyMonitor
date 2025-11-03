@@ -12,31 +12,37 @@ import SwiftUI
 struct ScriptExecutionView: View {
   // 让视图可以观察传入的 ProcessRunner 对象的变化并自动刷新。
   @ObservedObject var runner: ProcessRunner
-
+  
   // 从环境中获取 ProcessManager，以便调用 stop/remove 方法
   @EnvironmentObject var processManager: ProcessManager
-
+  
   // 传入的脚本模型，包含了ID和名称
   let script: RunningScript
-
+  
   // 控制输出区域是否展开的状态
   @State private var isExpanded: Bool = true
-
+  
   // 为了在 @ObservedObject 中使用 runner，需要一个自定义的 init
   init(script: RunningScript) {
     self.script = script
     self._runner = ObservedObject(wrappedValue: script.runner)
   }
-
+  
   var body: some View {
-    // DisclosureGroup 是实现可折叠视图的完美原生组件
     DisclosureGroup(isExpanded: $isExpanded) {
-      // 折叠区域的内容：实时输出
       ScrollView {
-        Text(runner.output.isEmpty ? "等待脚本输出..." : runner.output)
-          .font(.system(.body, design: .monospaced))
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(8)
+        ScrollViewReader { proxy in
+          Text(runner.output.isEmpty ? "等待脚本输出..." : runner.output)
+            .font(.system(.body, design: .monospaced))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .id("output_bottom")
+            .onChange(of: runner.output) { _, _ in
+              withAnimation(.easeOut(duration: 0.2)) {
+                proxy.scrollTo("output_bottom", anchor: .bottom)
+              }
+            }
+        }
       }
       .frame(height: 150)
       .background(Color(NSColor.textBackgroundColor))
@@ -51,7 +57,7 @@ struct ScriptExecutionView: View {
     .cornerRadius(8)
     .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
   }
-
+  
   // 标签视图，包含状态、名称和控制按钮
   private var headerLabel: some View {
     HStack {
@@ -59,7 +65,7 @@ struct ScriptExecutionView: View {
       Circle()
         .frame(width: 10, height: 10)
         .foregroundColor(statusColor)
-
+      
       // 脚本名称和状态信息
       VStack(alignment: .leading) {
         Text(script.scriptName)
@@ -69,9 +75,9 @@ struct ScriptExecutionView: View {
           .font(.caption)
           .foregroundColor(.secondary)
       }
-
+      
       Spacer()
-
+      
       // 根据状态显示不同的按钮
       if runner.state.isRunning {
         Button("停止", role: .destructive) {
@@ -93,7 +99,7 @@ struct ScriptExecutionView: View {
       }
     }
   }
-
+  
   // --- 动态计算属性 ---
   private var statusColor: Color {
     switch runner.state {
@@ -102,7 +108,7 @@ struct ScriptExecutionView: View {
     case .stopped: return .red
     }
   }
-
+  
   private var statusMessage: String {
     switch runner.state {
     case .idle: return "正在准备..."
