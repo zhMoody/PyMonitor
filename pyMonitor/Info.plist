@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Privacy - Accessibility Usage Description</key>
+	<string>PyMonitor 需要获取辅助功能权限，以便其运行的脚本能够模拟键盘输入和鼠标点击，实现自动化操作。</string>
+	<key>Privacy - Input Monitoring Usage Description</key>
+	<string>PyMonitor 需要监听键盘输入事件，以便其运行的脚本能够响应全局快捷键或记录按键。</string>
+	<key>Privacy – Screen Recording Usage Description</key>
+	<string>PyMonitor 需要访问屏幕内容，以便其运行的脚本能够进行屏幕录制或截图</string>
+</dict>
+</plist>
