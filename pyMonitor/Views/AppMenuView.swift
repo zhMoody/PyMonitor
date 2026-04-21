@@ -17,42 +17,51 @@ struct AppMenuView: View {
   @State private var selectedScript: String?
   @State private var scriptArguments: String = ""
   @State private var showArgumentsSuggestions: Bool = false
+  @State private var textFieldFrame: CGRect = .zero
   @FocusState private var isArgumentsFieldFocused: Bool
 
   var body: some View {
-    VStack(spacing: 0) {
-      headerView
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-
-      Divider()
-
-      scriptSelectionView
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-
-      // 主内容区域是一个脚本列表
-      ScrollView {
-        if processManager.runningScripts.isEmpty {
-          emptyStateView
-        } else {
-          VStack(spacing: 10) {
-            ForEach(processManager.runningScripts) { script in
-              ScriptExecutionView(script: script)
-            }
-          }
+    ZStack(alignment: .topLeading) {
+      VStack(spacing: 0) {
+        headerView
           .padding(.horizontal, 16)
           .padding(.vertical, 12)
+
+        Divider()
+
+        scriptSelectionView
+          .padding(.horizontal, 16)
+          .padding(.top, 16)
+
+        ScrollView {
+          if processManager.runningScripts.isEmpty {
+            emptyStateView
+          } else {
+            VStack(spacing: 10) {
+              ForEach(processManager.runningScripts) { script in
+                ScriptExecutionView(script: script)
+              }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+          }
         }
+
+        Divider()
+
+        footerView
+          .padding(.horizontal, 16)
+          .padding(.vertical, 10)
       }
 
-      Divider()
-
-      footerView
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+      // 联想面板放在 ZStack 最顶层，精确定位到输入框正下方
+      if showArgumentsSuggestions && isArgumentsFieldFocused && !textFieldFrame.isEmpty {
+        suggestionPanel
+          .offset(x: textFieldFrame.minX, y: textFieldFrame.maxY + 4)
+      }
     }
     .frame(width: 500, height: 650)
+    .coordinateSpace(name: "appRoot")
     .background(Color(NSColor.windowBackgroundColor))
     .onAppear(perform: scanForScripts)
     .onChange(of: settingsManager.scriptFolderPath) { _, _ in scanForScripts() }
@@ -61,6 +70,35 @@ struct AppMenuView: View {
 
 // MARK: - 视图构建
 extension AppMenuView {
+  fileprivate var suggestionPanel: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      ForEach(filteredArgumentsHistory.prefix(5), id: \.self) { suggestion in
+        Button(action: {
+          scriptArguments = suggestion
+          showArgumentsSuggestions = false
+          isArgumentsFieldFocused = false
+        }) {
+          Text(suggestion)
+            .font(.system(size: 12))
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+
+        if suggestion != filteredArgumentsHistory.prefix(5).last {
+          Divider()
+        }
+      }
+    }
+    .frame(width: 200)
+    .background(.background)
+    .cornerRadius(6)
+    .shadow(radius: 4)
+  }
+
   fileprivate var headerView: some View {
     HStack(spacing: 12) {
       Text("Python 脚本监控器")
@@ -87,56 +125,33 @@ extension AppMenuView {
       }
       .labelsHidden()
       .frame(width: 180)
+      .onChange(of: selectedScript) { _, _ in
+        scriptArguments = ""
+        showArgumentsSuggestions = false
+      }
 
-      // 参数输入框（使用 overlay 实现浮层联想）
+      // 参数输入框
       TextField("启动参数（可选）", text: $scriptArguments)
         .textFieldStyle(.roundedBorder)
         .focused($isArgumentsFieldFocused)
+        .background(GeometryReader { geo in
+          Color.clear.onAppear {
+            textFieldFrame = geo.frame(in: .named("appRoot"))
+          }
+        })
         .onChange(of: scriptArguments) { _, _ in
-          showArgumentsSuggestions = !scriptArguments.isEmpty && !filteredArgumentsHistory.isEmpty
+          showArgumentsSuggestions = !filteredArgumentsHistory.isEmpty
         }
         .onChange(of: isArgumentsFieldFocused) { _, focused in
-          if !focused {
+          if focused {
+            showArgumentsSuggestions = !filteredArgumentsHistory.isEmpty
+          } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
               showArgumentsSuggestions = false
             }
           }
         }
-        .onSubmit {
-          startNewScript()
-        }
-        .overlay(alignment: .topLeading) {
-          // 联想建议浮层（绝对定位，不影响布局）
-          if showArgumentsSuggestions && isArgumentsFieldFocused {
-            VStack(alignment: .leading, spacing: 0) {
-              ForEach(filteredArgumentsHistory.prefix(5), id: \.self) { suggestion in
-                Button(action: {
-                  scriptArguments = suggestion
-                  showArgumentsSuggestions = false
-                  isArgumentsFieldFocused = false
-                }) {
-                  Text(suggestion)
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                if suggestion != filteredArgumentsHistory.prefix(5).last {
-                  Divider()
-                }
-              }
-            }
-            .background(.background)
-            .cornerRadius(6)
-            .shadow(radius: 4)
-            .offset(y: 28)
-            .zIndex(1000)
-          }
-        }
+        .onSubmit { startNewScript() }
 
       // 启动按钮
       Button(action: startNewScript) {
@@ -207,23 +222,21 @@ extension AppMenuView {
       arguments: args
     )
 
-    // 保存参数到历史记录（不清空输入框）
+    // 保存参数到历史记录
     if !scriptArguments.isEmpty {
-      settingsManager.addArgumentsToHistory(scriptArguments)
+      settingsManager.addArgumentsToHistory(scriptArguments, for: scriptName)
     }
 
     // 隐藏联想列表
     showArgumentsSuggestions = false
   }
 
-  // 过滤历史记录用于联想
+  // 当前选中脚本的参数历史（过滤后）
   fileprivate var filteredArgumentsHistory: [String] {
-    if scriptArguments.isEmpty {
-      return settingsManager.argumentsHistory
-    }
-    return settingsManager.argumentsHistory.filter {
-      $0.localizedCaseInsensitiveContains(scriptArguments)
-    }
+    guard let scriptName = selectedScript else { return [] }
+    let list = settingsManager.history(for: scriptName)
+    if scriptArguments.isEmpty { return list }
+    return list.filter { $0.localizedCaseInsensitiveContains(scriptArguments) }
   }
 
   fileprivate func scanForScripts() {

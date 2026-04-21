@@ -9,16 +9,12 @@ import Combine
 import Foundation
 import SwiftUI
 
-// 这是一个专门管理用户配置的 ObservableObject
 class SettingsManager: ObservableObject {
-  // @AppStorage 将属性与 UserDefaults 绑定，实现持久化存储
 
   @Published var pythonPath: String =
     UserDefaults.standard.string(forKey: "pythonPath") ?? "/usr/bin/python3"
   {
-    didSet {
-      UserDefaults.standard.set(pythonPath, forKey: "pythonPath")
-    }
+    didSet { UserDefaults.standard.set(pythonPath, forKey: "pythonPath") }
   }
 
   @Published var scriptFolderPath: String =
@@ -26,28 +22,57 @@ class SettingsManager: ObservableObject {
   {
     didSet {
       UserDefaults.standard.set(scriptFolderPath, forKey: "scriptFolderPath")
+      allHistory = Self.loadAllHistory(from: scriptFolderPath)
     }
   }
 
-  @Published var argumentsHistory: [String] =
-    UserDefaults.standard.stringArray(forKey: "argumentsHistory") ?? []
-  {
-    didSet {
-      UserDefaults.standard.set(argumentsHistory, forKey: "argumentsHistory")
-    }
+  // 全量历史，key 是脚本文件名
+  @Published private(set) var allHistory: [String: [String]] = [:]
+
+  init() {
+    allHistory = Self.loadAllHistory(from:
+      UserDefaults.standard.string(forKey: "scriptFolderPath") ?? ""
+    )
   }
 
-  // 添加参数到历史记录（去重并限制数量）
-  func addArgumentsToHistory(_ args: String) {
+  // 获取指定脚本的参数历史
+  func history(for scriptName: String) -> [String] {
+    allHistory[scriptName] ?? []
+  }
+
+  // 添加参数到指定脚本的历史记录
+  func addArgumentsToHistory(_ args: String, for scriptName: String) {
     guard !args.isEmpty else { return }
+    var list = allHistory[scriptName] ?? []
+    list.removeAll { $0 == args }
+    list.insert(args, at: 0)
+    if list.count > 50 { list = Array(list.prefix(50)) }
+    allHistory[scriptName] = list
+    saveAllHistory()
+  }
 
-    // 如果已存在，先移除旧的
-    argumentsHistory.removeAll { $0 == args }
-    // 添加到最前面
-    argumentsHistory.insert(args, at: 0)
-    // 限制最多保存 20 条
-    if argumentsHistory.count > 20 {
-      argumentsHistory = Array(argumentsHistory.prefix(20))
-    }
+  // MARK: - 文件读写（JSON 格式，key 为脚本文件名）
+
+  private var historyFileURL: URL? {
+    guard !scriptFolderPath.isEmpty else { return nil }
+    let expanded = (scriptFolderPath as NSString).expandingTildeInPath
+    return URL(fileURLWithPath: expanded).appendingPathComponent(".script_command")
+  }
+
+  private static func loadAllHistory(from folderPath: String) -> [String: [String]] {
+    guard !folderPath.isEmpty else { return [:] }
+    let expanded = (folderPath as NSString).expandingTildeInPath
+    let url = URL(fileURLWithPath: expanded).appendingPathComponent(".script_command")
+    guard let data = try? Data(contentsOf: url),
+          let dict = try? JSONDecoder().decode([String: [String]].self, from: data)
+    else { return [:] }
+    return dict
+  }
+
+  private func saveAllHistory() {
+    guard let url = historyFileURL,
+          let data = try? JSONEncoder().encode(allHistory)
+    else { return }
+    try? data.write(to: url, options: .atomic)
   }
 }
