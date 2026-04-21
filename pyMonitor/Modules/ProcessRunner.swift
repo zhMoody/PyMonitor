@@ -1,9 +1,3 @@
-//
-//  ProcessRunner.swift
-//  pyStart
-//
-//  Created by 张浩 on 2025/10/31.
-//
 
 //
 //  ProcessRunner.swift
@@ -20,10 +14,10 @@ import DequeModule // [新增] 导入 Swift Collections 库
 class ProcessRunner: ObservableObject {
   @Published var state: ProcessState = .idle
   
-  // [修改 1/5] 将单一的 String 替换为一个双端队列 Deque<String>
+  // 将单一的 String 替换为一个双端队列 Deque<String>
   @Published private(set) var logLines: Deque<String> = []
 
-  // [修改 2/5] 创建一个计算属性来无缝对接视图层
+  // 创建一个计算属性来无缝对接视图层
   // 你的视图代码完全不需要任何改动，它会继续访问这个 `output` 变量
   var output: String {
     // Deque 也是一个序列，可以直接用于拼接字符串
@@ -34,11 +28,11 @@ class ProcessRunner: ObservableObject {
   private var process: Process?
   private var outputPipe: Pipe?
   
-  // [修改 3/5] 新增一个行缓冲区来处理不完整的日志流
+  // 新增一个行缓冲区来处理不完整的日志流
   private var lineBuffer: String = ""
 
   // 启动脚本
-  func start(executablePath: String, scriptPath: String) {
+  func start(executablePath: String, scriptPath: String, arguments: [String] = []) {
     // 只要当前没有进程在运行，就允许启动
     guard !state.isRunning else { return }
 
@@ -71,7 +65,8 @@ class ProcessRunner: ObservableObject {
     }
 
     process?.executableURL = URL(fileURLWithPath: expandedExecutablePath)
-    process?.arguments = [expandedScriptPath]
+    // 将脚本路径和自定义参数组合，添加 -u 参数强制 Python 使用无缓冲模式
+    process?.arguments = ["-u", expandedScriptPath] + arguments
 
     // 将标准输出和标准错误都重定向到同一个新创建的管道
     process?.standardOutput = outputPipe
@@ -126,7 +121,7 @@ class ProcessRunner: ObservableObject {
 
     // --- 运行进程 ---
     do {
-      // [修改 5/5] 每次启动前，清空日志队列和缓冲区
+      //  每次启动前，清空日志队列和缓冲区
       logLines.removeAll()
       lineBuffer = ""
       

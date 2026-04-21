@@ -20,7 +20,7 @@ struct ScriptExecutionView: View {
   let script: RunningScript
   
   // 控制输出区域是否展开的状态
-  @State private var isExpanded: Bool = true
+  @State private var isExpanded: Bool = false
   
   // 为了在 @ObservedObject 中使用 runner，需要一个自定义的 init
   init(script: RunningScript) {
@@ -36,6 +36,7 @@ struct ScriptExecutionView: View {
             .font(.system(.body, design: .monospaced))
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(8)
+            .textSelection(.enabled)
             .id("output_bottom")
             .onChange(of: runner.output) { _, _ in
               withAnimation(.easeOut(duration: 0.2)) {
@@ -49,7 +50,6 @@ struct ScriptExecutionView: View {
       .cornerRadius(6)
       .padding(.top, 4)
     } label: {
-      // 折叠区域的标签（始终可见的部分）
       headerLabel
     }
     .padding(10)
@@ -57,27 +57,32 @@ struct ScriptExecutionView: View {
     .cornerRadius(8)
     .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
   }
-  
-  // 标签视图，包含状态、名称和控制按钮
+
   private var headerLabel: some View {
     HStack {
       // 状态指示灯
       Circle()
         .frame(width: 10, height: 10)
         .foregroundColor(statusColor)
-      
+
       // 脚本名称和状态信息
       VStack(alignment: .leading) {
         Text(script.scriptName)
           .font(.headline)
           .lineLimit(1)
+        if !script.arguments.isEmpty {
+          Text("参数: \(script.arguments.joined(separator: " "))")
+            .font(.caption2)
+            .foregroundColor(.blue)
+            .lineLimit(1)
+        }
         Text(statusMessage)
           .font(.caption)
           .foregroundColor(.secondary)
       }
-      
+
       Spacer()
-      
+
       // 根据状态显示不同的按钮
       if runner.state.isRunning {
         Button("停止", role: .destructive) {
@@ -99,7 +104,6 @@ struct ScriptExecutionView: View {
       }
     }
   }
-  
   // --- 动态计算属性 ---
   private var statusColor: Color {
     switch runner.state {
@@ -108,7 +112,7 @@ struct ScriptExecutionView: View {
     case .stopped: return .red
     }
   }
-  
+
   private var statusMessage: String {
     switch runner.state {
     case .idle: return "正在准备..."

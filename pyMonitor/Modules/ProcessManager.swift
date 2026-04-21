@@ -23,9 +23,9 @@ class ProcessManager: ObservableObject {
   }
 
   // 启动一个新脚本
-  func startScript(scriptName: String, folderPath: String, pythonPath: String) {
+  func startScript(scriptName: String, folderPath: String, pythonPath: String, arguments: [String] = []) {
     let newRunner = ProcessRunner()
-    let newScript = RunningScript(scriptName: scriptName, runner: newRunner)
+    let newScript = RunningScript(scriptName: scriptName, arguments: arguments, runner: newRunner)
 
     // 将新脚本添加到数组中，UI 会自动刷新
     runningScripts.append(newScript)
@@ -34,7 +34,7 @@ class ProcessManager: ObservableObject {
     let folderURL = URL(fileURLWithPath: (folderPath as NSString).expandingTildeInPath)
     let scriptURL = folderURL.appendingPathComponent(scriptName)
 
-    newRunner.start(executablePath: pythonPath, scriptPath: scriptURL.path)
+    newRunner.start(executablePath: pythonPath, scriptPath: scriptURL.path, arguments: arguments)
   }
 
   // 停止一个指定的脚本

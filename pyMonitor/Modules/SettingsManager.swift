@@ -28,4 +28,26 @@ class SettingsManager: ObservableObject {
       UserDefaults.standard.set(scriptFolderPath, forKey: "scriptFolderPath")
     }
   }
+
+  @Published var argumentsHistory: [String] =
+    UserDefaults.standard.stringArray(forKey: "argumentsHistory") ?? []
+  {
+    didSet {
+      UserDefaults.standard.set(argumentsHistory, forKey: "argumentsHistory")
+    }
+  }
+
+  // 添加参数到历史记录（去重并限制数量）
+  func addArgumentsToHistory(_ args: String) {
+    guard !args.isEmpty else { return }
+
+    // 如果已存在，先移除旧的
+    argumentsHistory.removeAll { $0 == args }
+    // 添加到最前面
+    argumentsHistory.insert(args, at: 0)
+    // 限制最多保存 20 条
+    if argumentsHistory.count > 20 {
+      argumentsHistory = Array(argumentsHistory.prefix(20))
+    }
+  }
 }

@@ -13,6 +13,7 @@ import Foundation
 struct RunningScript: Identifiable {
   let id = UUID()  // 唯一的标识符
   let scriptName: String  // 脚本的文件名
+  let arguments: [String]  // 启动参数
 
   // 每个脚本实例都拥有自己独立的 ProcessRunner
   let runner: ProcessRunner
