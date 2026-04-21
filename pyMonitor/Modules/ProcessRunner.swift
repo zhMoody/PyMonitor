@@ -123,8 +123,18 @@ class ProcessRunner: ObservableObject {
         // 发送通知（手动停止不通知）
         if self.notifyOnFinish && !self.isManualStop {
           let content = UNMutableNotificationContent()
-          content.title = "脚本已完成"
-          content.body = "\(self.currentScriptName ?? "脚本") \(reason)"
+          let scriptName = self.currentScriptName ?? "脚本"
+          switch process.terminationReason {
+          case .exit where process.terminationStatus == 0:
+            content.title = "✅ 脚本已完成"
+            content.body = "\(scriptName) 正常退出"
+          case .exit:
+            content.title = "⚠️ 脚本异常退出"
+            content.body = "\(scriptName) 退出码: \(process.terminationStatus)"
+          default:
+            content.title = "❌ 脚本崩溃"
+            content.body = "\(scriptName) 因未捕获的信号终止"
+          }
           content.sound = .default
           let request = UNNotificationRequest(
             identifier: UUID().uuidString,
