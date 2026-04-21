@@ -6,23 +6,23 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct pyStartApp: App {
-  // MARK: - 状态管理
-
   @StateObject private var processManager = ProcessManager()
   @StateObject private var settingsManager = SettingsManager()
   @StateObject private var launchManager = LaunchAtLoginManager()
-  
+
   var body: some Scene {
     MenuBarExtra {
-      // 注入 ProcessManager
       AppMenuView()
         .environmentObject(processManager)
         .environmentObject(settingsManager)
+        .onAppear {
+          UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
     } label: {
-      // 可以根据是否有任何脚本在运行来改变
       Image(systemName: processManager.hasRunningScripts ? "terminal.fill" : "terminal")
     }
     .menuBarExtraStyle(.window)

@@ -49,6 +49,8 @@
   <string>PyMonitor 需要访问屏幕内容，以便其运行的脚本能够进行屏幕录制或截图。</string>
 
   <!-- File System Access - 文件系统访问 -->
+  <key>NSUserNotificationUsageDescription</key>
+  <string>PyMonitor 需要发送通知，以便在脚本执行完成时提醒您。</string>
   <key>NSDesktopFolderUsageDescription</key>
   <string>PyMonitor 需要访问“桌面”文件夹，以便其运行的脚本能够读取或写入文件。</string>
   <key>NSDocumentsFolderUsageDescription</key>

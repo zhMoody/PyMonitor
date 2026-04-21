@@ -166,12 +166,13 @@ extension AppMenuView {
 
   fileprivate var footerView: some View {
     HStack(spacing: 12) {
-      if processManager.hasRunningScripts {
+      let runningCount = processManager.runningScripts.filter { $0.runner.state.isRunning }.count
+      if runningCount > 0 {
         HStack(spacing: 6) {
           Circle()
             .fill(.green)
             .frame(width: 8, height: 8)
-          Text("\(processManager.runningScripts.filter { $0.runner.state.isRunning }.count) 个脚本运行中")
+          Text("\(runningCount) 个脚本运行中")
             .font(.caption)
             .foregroundStyle(.secondary)
         }

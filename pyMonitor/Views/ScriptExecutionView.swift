@@ -83,6 +83,16 @@ struct ScriptExecutionView: View {
 
       Spacer()
 
+      // 通知开关（仅在运行中显示）
+      if runner.state.isRunning {
+        Toggle(isOn: $runner.notifyOnFinish) {
+          Image(systemName: runner.notifyOnFinish ? "bell.fill" : "bell.slash")
+        }
+        .toggleStyle(.button)
+        .buttonStyle(.borderless)
+        .help(runner.notifyOnFinish ? "完成后通知（点击关闭）" : "完成后不通知（点击开启）")
+      }
+
       // 根据状态显示不同的按钮
       if runner.state.isRunning {
         Button("停止", role: .destructive) {

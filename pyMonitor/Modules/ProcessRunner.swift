@@ -9,10 +9,12 @@
 import Combine
 import Foundation
 import SwiftUI
+import UserNotifications
 import DequeModule // [新增] 导入 Swift Collections 库
 
 class ProcessRunner: ObservableObject {
   @Published var state: ProcessState = .idle
+  @Published var notifyOnFinish: Bool = false
   
   // 将单一的 String 替换为一个双端队列 Deque<String>
   @Published private(set) var logLines: Deque<String> = []
@@ -24,12 +26,12 @@ class ProcessRunner: ObservableObject {
     return logLines.joined(separator: "\n")
   }
 
-  private let maxLogLines = 100 // 将 100 定义为一个常量，方便未来修改
+  private let maxLogLines = 100
   private var process: Process?
   private var outputPipe: Pipe?
-  
-  // 新增一个行缓冲区来处理不完整的日志流
   private var lineBuffer: String = ""
+  private var currentScriptName: String?
+  private var isManualStop = false
 
   // 启动脚本
   func start(executablePath: String, scriptPath: String, arguments: [String] = []) {
@@ -37,7 +39,8 @@ class ProcessRunner: ObservableObject {
     guard !state.isRunning else { return }
 
     let expandedExecutablePath = (executablePath as NSString).expandingTildeInPath
-       let expandedScriptPath = (scriptPath as NSString).expandingTildeInPath
+    let expandedScriptPath = (scriptPath as NSString).expandingTildeInPath
+    currentScriptName = URL(fileURLWithPath: expandedScriptPath).lastPathComponent
 
     guard !expandedExecutablePath.isEmpty,
       FileManager.default.isExecutableFile(atPath: expandedExecutablePath)
@@ -102,9 +105,9 @@ class ProcessRunner: ObservableObject {
     }
 
     // --- 进程终止处理器 ---
-    // 设置一个处理器，当进程因为任何原因终止时，它就会被调用
     process?.terminationHandler = { [weak self] process in
       DispatchQueue.main.async {
+        guard let self = self else { return }
         let reason: String
         switch process.terminationReason {
         case .exit:
@@ -114,17 +117,31 @@ class ProcessRunner: ObservableObject {
         @unknown default:
           reason = "进程因未知原因终止。"
         }
-        self?.state = .stopped(reason: reason)
-        self?.cleanup()  // 统一清理资源
+        self.state = .stopped(reason: reason)
+        self.cleanup()
+
+        // 发送通知（手动停止不通知）
+        if self.notifyOnFinish && !self.isManualStop {
+          let content = UNMutableNotificationContent()
+          content.title = "脚本已完成"
+          content.body = "\(self.currentScriptName ?? "脚本") \(reason)"
+          content.sound = .default
+          let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+          )
+          UNUserNotificationCenter.current().add(request)
+        }
       }
     }
 
     // --- 运行进程 ---
     do {
-      //  每次启动前，清空日志队列和缓冲区
       logLines.removeAll()
       lineBuffer = ""
-      
+      isManualStop = false
+
       try process?.run()
       self.state = .running
     } catch {
@@ -135,9 +152,10 @@ class ProcessRunner: ObservableObject {
   // 停止脚本
   func stop() {
     guard let process = process, process.isRunning else { return }
-    process.terminate()  // 发送终止信号
+    isManualStop = true
+    process.terminate()
     self.state = .stopped(reason: "已手动停止。")
-    cleanup()  // 统一清理资源
+    cleanup()
   }
 
   // 清理所有与进程相关的资源
