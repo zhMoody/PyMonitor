@@ -92,7 +92,7 @@ struct ScriptExecutionView: View {
             }
         }
       }
-      .scrollIndicators(.hidden)
+			.scrollIndicators(.visible)
       .frame(height: 150)
       .background(Color(NSColor.textBackgroundColor))
       .cornerRadius(6)
@@ -143,6 +143,13 @@ struct ScriptExecutionView: View {
 
       // 根据状态显示不同的按钮
       if runner.state.isRunning {
+        Button(action: { runner.clearLogs() }) {
+          Image(systemName: "trash")
+        }
+        .buttonStyle(.borderless)
+        .foregroundColor(.secondary)
+        .help("清空日志")
+
         Button("停止", role: .destructive) {
           processManager.stopScript(id: script.id)
         }

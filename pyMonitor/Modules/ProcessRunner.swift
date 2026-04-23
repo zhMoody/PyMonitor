@@ -159,6 +159,11 @@ class ProcessRunner: ObservableObject {
     }
   }
 
+  func clearLogs() {
+    logLines.removeAll()
+    lineBuffer = ""
+  }
+
   // 停止脚本
   func stop() {
     guard let process = process, process.isRunning else { return }
