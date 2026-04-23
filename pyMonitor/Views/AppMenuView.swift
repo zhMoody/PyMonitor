@@ -106,7 +106,10 @@ extension AppMenuView {
 
       Spacer()
 
-      Button(action: { openSettings() }) {
+      Button(action: {
+        openSettings()
+        NSApp.activate(ignoringOtherApps: true)
+      }) {
         Image(systemName: "gearshape")
       }
       .buttonStyle(.plain)

@@ -7,7 +7,52 @@
 
 // MARK: - ScriptExecutionView.swift
 
+import AppKit
 import SwiftUI
+
+/// 嵌入 ScrollView 内部，监听 NSScrollView 的实时滚动通知。
+/// 当用户向上滚时关闭自动滚动；当滚回底部（距底部 ≤ 20pt）时恢复。
+private struct ScrollPositionObserver: NSViewRepresentable {
+  @Binding var autoScroll: Bool
+
+  func makeNSView(context: Context) -> NSView {
+    let view = NSView()
+    DispatchQueue.main.async {
+      guard let scrollView = view.enclosingScrollView else { return }
+      NotificationCenter.default.addObserver(
+        context.coordinator,
+        selector: #selector(Coordinator.didLiveScroll(_:)),
+        name: NSScrollView.didLiveScrollNotification,
+        object: scrollView
+      )
+    }
+    return view
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {}
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(autoScroll: $autoScroll)
+  }
+
+  class Coordinator: NSObject {
+    var autoScroll: Binding<Bool>
+
+    init(autoScroll: Binding<Bool>) {
+      self.autoScroll = autoScroll
+    }
+
+    @objc func didLiveScroll(_ notification: Notification) {
+      guard let scrollView = notification.object as? NSScrollView else { return }
+      let contentHeight = scrollView.documentView?.frame.height ?? 0
+      let visibleHeight = scrollView.contentView.bounds.height
+      let offsetY = scrollView.contentView.bounds.origin.y
+      let distanceFromBottom = contentHeight - visibleHeight - offsetY
+      // 距底部 20pt 以内视为"在底部"
+      autoScroll.wrappedValue = distanceFromBottom <= 20
+    }
+  }
+}
 
 struct ScriptExecutionView: View {
   // 让视图可以观察传入的 ProcessRunner 对象的变化并自动刷新。
@@ -21,6 +66,8 @@ struct ScriptExecutionView: View {
   
   // 控制输出区域是否展开的状态
   @State private var isExpanded: Bool = false
+  // 用户手动向上滚时暂停自动滚动，回到底部后恢复
+  @State private var autoScroll: Bool = true
   
   // 为了在 @ObservedObject 中使用 runner，需要一个自定义的 init
   init(script: RunningScript) {
@@ -38,13 +85,14 @@ struct ScriptExecutionView: View {
             .padding(8)
             .textSelection(.enabled)
             .id("output_bottom")
+            .background(ScrollPositionObserver(autoScroll: $autoScroll))
             .onChange(of: runner.output) { _, _ in
-              withAnimation(.easeOut(duration: 0.2)) {
-                proxy.scrollTo("output_bottom", anchor: .bottom)
-              }
+              guard autoScroll else { return }
+              proxy.scrollTo("output_bottom", anchor: .bottom)
             }
         }
       }
+      .scrollIndicators(.hidden)
       .frame(height: 150)
       .background(Color(NSColor.textBackgroundColor))
       .cornerRadius(6)

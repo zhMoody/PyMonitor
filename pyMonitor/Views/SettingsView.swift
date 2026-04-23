@@ -5,6 +5,7 @@
 //  Created by 张浩 on 2025/10/31.
 //
 
+import AVFoundation
 import SwiftUI
 import UserNotifications
 
@@ -13,79 +14,120 @@ struct SettingsView: View {
   @EnvironmentObject var launchManager: LaunchAtLoginManager
 
   @State private var notificationAuthStatus: UNAuthorizationStatus = .notDetermined
+  @State private var micStatus: AVAuthorizationStatus = .notDetermined
+  @State private var cameraStatus: AVAuthorizationStatus = .notDetermined
+  @State private var screenCaptureGranted: Bool = false
+  @State private var accessibilityGranted: Bool = false
 
   var body: some View {
-    Form {
-      Section(header: Text("Python 环境配置").font(.headline)) {
-        Text("请输入你的 Python 解释器可执行文件的完整路径。")
-          .font(.caption)
-          .foregroundColor(.secondary)
+    let labelWidth: CGFloat = 90
+    VStack(alignment: .leading, spacing: 0) {
 
-        LabeledContent {
-          TextField("", text: $settingsManager.pythonPath)
-        } label: {
-          Text("解释器路径:")
-        }
+      // MARK: Python 环境配置
+      Text("Python 环境配置").font(.headline)
+      Text("请输入你的 Python 解释器可执行文件的完整路径。")
+        .font(.caption).foregroundColor(.secondary).padding(.top, 2)
+      row(label: "解释器路径:", labelWidth: labelWidth) {
+        TextField("", text: $settingsManager.pythonPath)
+          .textFieldStyle(.roundedBorder)
       }
 
-      Divider().padding(.vertical, 8)
+      Divider().padding(.vertical, 12)
 
-      Section(header: Text("脚本文件夹配置").font(.headline)) {
-        Text("选择一个包含你想要运行的 .py 脚本的文件夹。")
-          .font(.caption)
-          .foregroundColor(.secondary)
-
-        LabeledContent {
-          HStack {
-            Text(
-              settingsManager.scriptFolderPath.isEmpty
-                ? "尚未选择文件夹" : settingsManager.scriptFolderPath
-            )
+      // MARK: 脚本文件夹配置
+      Text("脚本文件夹配置").font(.headline)
+      Text("选择一个包含你想要运行的 .py 脚本的文件夹。")
+        .font(.caption).foregroundColor(.secondary).padding(.top, 2)
+      row(label: "脚本目录:", labelWidth: labelWidth) {
+        HStack {
+          Text(settingsManager.scriptFolderPath.isEmpty ? "尚未选择文件夹" : settingsManager.scriptFolderPath)
             .foregroundColor(settingsManager.scriptFolderPath.isEmpty ? .secondary : .primary)
-            Spacer()
-            Button("选择文件夹...") {
-              openFolderSelectionPanel()
-            }
-          }
-        } label: {
-          Text("脚本目录:")
+            .lineLimit(1)
+          Spacer()
+          Button("选择文件夹...") { openFolderSelectionPanel() }
         }
       }
 
-      Divider().padding(.vertical, 8)
+      Divider().padding(.vertical, 12)
 
-      Section(header: Text("通用设置").font(.headline)) {
-        Toggle("开机时自动启动", isOn: $launchManager.isEnabled)
-          .toggleStyle(.switch)
-
-        LabeledContent {
-          HStack(spacing: 8) {
-            switch notificationAuthStatus {
-            case .authorized:
-              Label("已允许", systemImage: "checkmark.circle.fill")
-                .foregroundColor(.green)
-              Button("前往系统设置") { openNotificationSettings() }
-            case .denied:
-              Label("已拒绝", systemImage: "xmark.circle.fill")
-                .foregroundColor(.red)
-              Button("前往系统设置开启") { openNotificationSettings() }
-            case .notDetermined:
-              Label("未请求", systemImage: "questionmark.circle")
-                .foregroundColor(.secondary)
-              Button("请求权限") { requestNotificationPermission() }
-            default:
-              Label("未知", systemImage: "questionmark.circle")
-                .foregroundColor(.secondary)
-            }
-          }
-        } label: {
-          Text("完成通知:")
-        }
+      // MARK: 通用设置
+      Text("通用设置").font(.headline)
+      row(label: "开机启动:", labelWidth: labelWidth) {
+        Toggle("开机时自动启动", isOn: $launchManager.isEnabled).toggleStyle(.switch)
       }
+
+      Divider().padding(.vertical, 12)
+
+      // MARK: 权限管理
+      Text("权限管理").font(.headline)
+      Text("以下权限供脚本按需使用，未用到的可忽略。")
+        .font(.caption).foregroundColor(.secondary).padding(.top, 2)
+
+      permissionRow2("完成通知:", labelWidth: labelWidth, status: notificationStatus, url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Notifications")
+      permissionRow2("麦克风:", labelWidth: labelWidth, status: avStatus(micStatus), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
+      permissionRow2("摄像头:", labelWidth: labelWidth, status: avStatus(cameraStatus), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")
+      permissionRow2("屏幕录制:", labelWidth: labelWidth, status: boolStatus(screenCaptureGranted), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+      permissionRow2("辅助功能:", labelWidth: labelWidth, status: boolStatus(accessibilityGranted), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
     }
-    .padding()
-    .frame(width: 500, height: 380)
-    .onAppear { checkNotificationStatus() }
+    .padding(20)
+    .frame(width: 500)
+    .onAppear { refreshAllStatuses() }
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+      NSApp.windows.filter { $0.canBecomeKey }.forEach { $0.makeKeyAndOrderFront(nil) }
+    }
+  }
+
+  // MARK: - 通用行布局
+
+  private func row<C: View>(label: String, labelWidth: CGFloat, @ViewBuilder content: () -> C) -> some View {
+    HStack(alignment: .center, spacing: 12) {
+      Text(label)
+        .frame(width: labelWidth, alignment: .trailing)
+        .foregroundColor(.secondary)
+      content()
+    }
+    .padding(.top, 8)
+  }
+
+  private func permissionRow2(_ label: String, labelWidth: CGFloat, status: (String, String, Color), url: String) -> some View {
+    HStack(alignment: .center, spacing: 12) {
+      Text(label)
+        .frame(width: labelWidth, alignment: .trailing)
+        .foregroundColor(.secondary)
+      Label(status.0, systemImage: status.1)
+        .foregroundColor(status.2)
+      Spacer()
+      Button("前往授权") {
+        if let u = URL(string: url) { NSWorkspace.shared.open(u) }
+      }
+      .buttonStyle(.borderless)
+      .foregroundColor(.accentColor)
+    }
+    .padding(.top, 8)
+  }
+
+  // MARK: - 状态计算
+
+  private var notificationStatus: (String, String, Color) {
+    switch notificationAuthStatus {
+    case .authorized: return ("已允许", "checkmark.circle.fill", .green)
+    case .denied: return ("已拒绝", "xmark.circle.fill", .red)
+    default: return ("未授权", "questionmark.circle", .secondary)
+    }
+  }
+
+  private func avStatus(_ s: AVAuthorizationStatus) -> (String, String, Color) {
+    switch s {
+    case .authorized: return ("已允许", "checkmark.circle.fill", .green)
+    case .denied, .restricted: return ("已拒绝", "xmark.circle.fill", .red)
+    default: return ("未授权", "questionmark.circle", .secondary)
+    }
+  }
+
+  private func boolStatus(_ granted: Bool) -> (String, String, Color) {
+    granted
+      ? ("已允许", "checkmark.circle.fill", .green)
+      : ("未授权", "questionmark.circle", .secondary)
   }
 }
 
@@ -105,23 +147,23 @@ extension SettingsView {
     }
   }
 
-  fileprivate func checkNotificationStatus() {
+  fileprivate func refreshAllStatuses() {
+    // 通知
     UNUserNotificationCenter.current().getNotificationSettings { settings in
-      DispatchQueue.main.async {
-        notificationAuthStatus = settings.authorizationStatus
-      }
+      DispatchQueue.main.async { notificationAuthStatus = settings.authorizationStatus }
     }
+    // 麦克风 / 摄像头
+    micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+    cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+    // 屏幕录制
+    screenCaptureGranted = CGPreflightScreenCaptureAccess()
+    // 辅助功能
+    accessibilityGranted = AXIsProcessTrusted()
   }
 
   fileprivate func requestNotificationPermission() {
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
-      checkNotificationStatus()
-    }
-  }
-
-  fileprivate func openNotificationSettings() {
-    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
-      NSWorkspace.shared.open(url)
+      refreshAllStatuses()
     }
   }
 }
