@@ -76,7 +76,7 @@ class ProcessRunner: ObservableObject {
     process?.standardError = outputPipe
 
     // --- 异步读取输出 ---
-    // [修改 4/5] 这是最核心的改动：重写日志处理逻辑以使用 Deque
+    // 核心的改动：重写日志处理逻辑以使用 Deque
     outputPipe.fileHandleForReading.readabilityHandler = { [weak self] fileHandle in
         guard let self = self else { return }
         let data = fileHandle.availableData

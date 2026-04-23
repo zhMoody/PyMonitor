@@ -19,6 +19,7 @@ struct pyStartApp: App {
       AppMenuView()
         .environmentObject(processManager)
         .environmentObject(settingsManager)
+        .environmentObject(launchManager)
         .onAppear {
           UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         }
@@ -27,10 +28,10 @@ struct pyStartApp: App {
     }
     .menuBarExtraStyle(.window)
 
-    Settings {
-      SettingsView()
-        .environmentObject(settingsManager)
-        .environmentObject(launchManager)
-    }
+//    Settings {
+//      SettingsView()
+//        .environmentObject(settingsManager)
+//        .environmentObject(launchManager)
+//    }
   }
 }

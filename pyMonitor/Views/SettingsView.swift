@@ -69,8 +69,7 @@ struct SettingsView: View {
       permissionRow2("屏幕录制:", labelWidth: labelWidth, status: boolStatus(screenCaptureGranted), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
       permissionRow2("辅助功能:", labelWidth: labelWidth, status: boolStatus(accessibilityGranted), url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
     }
-    .padding(20)
-    .frame(width: 500)
+    .padding(16)
     .onAppear { refreshAllStatuses() }
   }
 
@@ -149,13 +148,19 @@ extension SettingsView {
     UNUserNotificationCenter.current().getNotificationSettings { settings in
       DispatchQueue.main.async { notificationAuthStatus = settings.authorizationStatus }
     }
-    // 麦克风 / 摄像头
-    micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
-    cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
-    // 屏幕录制
-    screenCaptureGranted = CGPreflightScreenCaptureAccess()
-    // 辅助功能
-    accessibilityGranted = AXIsProcessTrusted()
+    // 其他权限检查放到后台线程避免阻塞
+    DispatchQueue.global(qos: .userInitiated).async {
+      let mic = AVCaptureDevice.authorizationStatus(for: .audio)
+      let camera = AVCaptureDevice.authorizationStatus(for: .video)
+      let screen = CGPreflightScreenCaptureAccess()
+      let accessibility = AXIsProcessTrusted()
+      DispatchQueue.main.async {
+        micStatus = mic
+        cameraStatus = camera
+        screenCaptureGranted = screen
+        accessibilityGranted = accessibility
+      }
+    }
   }
 
   fileprivate func requestNotificationPermission() {

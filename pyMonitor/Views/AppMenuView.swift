@@ -11,8 +11,9 @@ import SwiftUI
 struct AppMenuView: View {
   @EnvironmentObject var processManager: ProcessManager
   @EnvironmentObject var settingsManager: SettingsManager
-  @Environment(\.openSettings) private var openSettings
+  @EnvironmentObject var launchManager: LaunchAtLoginManager
 
+  @State private var showSettings: Bool = false
   @State private var pythonScripts: [String] = []
   @State private var selectedScript: String?
   @State private var scriptArguments: String = ""
@@ -22,40 +23,14 @@ struct AppMenuView: View {
 
   var body: some View {
     ZStack(alignment: .topLeading) {
-      VStack(spacing: 0) {
-        headerView
-          .padding(.horizontal, 16)
-          .padding(.vertical, 12)
-
-        Divider()
-
-        scriptSelectionView
-          .padding(.horizontal, 16)
-          .padding(.top, 16)
-
-        ScrollView {
-          if processManager.runningScripts.isEmpty {
-            emptyStateView
-          } else {
-            VStack(spacing: 10) {
-              ForEach(processManager.runningScripts) { script in
-                ScriptExecutionView(script: script)
-              }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-          }
-        }
-
-        Divider()
-
-        footerView
-          .padding(.horizontal, 16)
-          .padding(.vertical, 10)
+      if showSettings {
+        settingsPageView
+      } else {
+        mainContentView
       }
 
       // 联想面板放在 ZStack 最顶层，精确定位到输入框正下方
-      if showArgumentsSuggestions && isArgumentsFieldFocused && !textFieldFrame.isEmpty {
+      if showArgumentsSuggestions && isArgumentsFieldFocused && !textFieldFrame.isEmpty && !showSettings {
         suggestionPanel
           .offset(x: textFieldFrame.minX, y: textFieldFrame.maxY + 4)
       }
@@ -65,6 +40,74 @@ struct AppMenuView: View {
     .background(Color(NSColor.windowBackgroundColor))
     .onAppear(perform: scanForScripts)
     .onChange(of: settingsManager.scriptFolderPath) { _, _ in scanForScripts() }
+  }
+
+  fileprivate var mainContentView: some View {
+    VStack(spacing: 0) {
+      headerView
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+
+      Divider()
+
+      scriptSelectionView
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+
+      ScrollView {
+        if processManager.runningScripts.isEmpty {
+          emptyStateView
+        } else {
+          VStack(spacing: 10) {
+            ForEach(processManager.runningScripts) { script in
+              ScriptExecutionView(script: script)
+            }
+          }
+          .padding(.horizontal, 16)
+          .padding(.vertical, 12)
+        }
+      }
+
+      Divider()
+
+      footerView
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+  }
+
+  fileprivate var settingsPageView: some View {
+    VStack(spacing: 0) {
+      HStack(alignment: .center) {
+        Button(action: { showSettings = false }) {
+          HStack(spacing: 4) {
+            Image(systemName: "chevron.left")
+            Text("返回")
+          }
+        }
+        .buttonStyle(.plain)
+        .frame(width: 60, alignment: .leading)
+
+        Spacer()
+
+        Text("设置").font(.headline)
+
+        Spacer()
+
+        Color.clear.frame(width: 60, height: 1)
+      }
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
+      .frame(height: 44)
+
+      Divider()
+
+      ScrollView {
+        SettingsView()
+          .environmentObject(settingsManager)
+          .environmentObject(launchManager)
+      }
+    }
   }
 }
 
@@ -106,7 +149,7 @@ extension AppMenuView {
 
       Spacer()
 
-      Button(action: { openSettings() }) {
+      Button(action: { showSettings = true }) {
         Image(systemName: "gearshape")
       }
       .buttonStyle(.plain)
