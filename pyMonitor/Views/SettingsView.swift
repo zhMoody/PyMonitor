@@ -72,9 +72,6 @@ struct SettingsView: View {
     .padding(20)
     .frame(width: 500)
     .onAppear { refreshAllStatuses() }
-    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-      NSApp.windows.filter { $0.canBecomeKey }.forEach { $0.makeKeyAndOrderFront(nil) }
-    }
   }
 
   // MARK: - 通用行布局
